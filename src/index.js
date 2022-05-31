@@ -6,6 +6,8 @@ const formEl = document.querySelector('#search-form');
 const galleryEl = document.querySelector('.gallery');
 const moreBtn = document.querySelector('.load-more');
 
+moreBtn.classList.add('hidden');
+
 // BackEnd
 
 // Variables for HTTP-request
@@ -20,7 +22,7 @@ let page = 1;
 const per_page = 40;
 let totalPages = 0;
 
-function pathMaker(term, pag) {
+function pathMaker() {
   return `${URL}?key=${API_KEY}&q=${q}&image_type=${image_type}&orientation=${orientation}&safesearch=${safesearch}&page=${page}&per_page=${per_page}`;
 }
 
@@ -33,34 +35,44 @@ moreBtn.addEventListener('click', onMoreBtnClick);
 
 function onSubmitForm(e) {
   e.preventDefault();
+  moreBtn.classList.add('hidden');
+
   page = 1;
   q = e.target.searchQuery.value;
   galleryEl.innerHTML = '';
 
-  const PATH = !q.trim() ? '' : pathMaker(q, page);
+  const PATH = !q.trim() ? '' : pathMaker();
 
   request(PATH)
     .then(data => {
-      totalPages = data.totalHits;
+      const totalPictures = data.totalHits;
+      totalPages = Math.ceil(totalPictures / per_page);
+
       makeMarkupGallery(data.hits);
+
+      alert(`Hooray! We found ${totalPictures} images.`);
+
+      if (totalPictures > per_page) {
+        moreBtn.classList.remove('hidden');
+      }
     })
     .catch(error => console.log(error));
 }
 
 function onMoreBtnClick() {
   page += 1;
-  const PATH = !q.trim() ? '' : pathMaker(q, page);
+  const PATH = !q.trim() ? '' : pathMaker();
+
+  if (page === totalPages) {
+    moreBtn.classList.add('hidden');
+    alert("We're sorry, but you've reached the end of search results.");
+  }
 
   request(PATH)
     .then(data => {
       makeMarkupGallery(data.hits);
     })
-    .catch(error => console.log(error));
-
-  if (page === totalPages) {
-    console.log('Hide a button Load_more');
-    alert("We're sorry, but you've reached the end of search results.");
-  }
+    .catch(error => error);
 }
 
 // Request
@@ -68,6 +80,7 @@ function onMoreBtnClick() {
 function request(url) {
   if (!url) {
     alert('Search field can not be empthy!');
+    return;
   } else {
     return axios
       .get(url)
