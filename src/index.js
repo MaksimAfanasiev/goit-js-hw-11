@@ -50,7 +50,7 @@ function onSubmitForm(e) {
 
       makeMarkupGallery(data.hits);
 
-      alert(`Hooray! We found ${totalPictures} images.`);
+      Notiflix.Notify.success(`Hooray! We found ${totalPictures} images.`);
 
       if (totalPictures > per_page) {
         moreBtn.classList.remove('hidden');
@@ -65,7 +65,9 @@ function onMoreBtnClick() {
 
   if (page === totalPages) {
     moreBtn.classList.add('hidden');
-    alert("We're sorry, but you've reached the end of search results.");
+    Notiflix.Notify.info(
+      "We're sorry, but you've reached the end of search results."
+    );
   }
 
   request(PATH)
@@ -79,14 +81,14 @@ function onMoreBtnClick() {
 
 function request(url) {
   if (!url) {
-    alert('Search field can not be empthy!');
+    Notiflix.Notify.failure('Search field can not be empthy!');
     return;
   } else {
     return axios
       .get(url)
       .then(response => {
         if (response.data.hits.length === 0) {
-          alert(
+          Notiflix.Notify.failure(
             'Sorry, there are no images matching your search query. Please try again.'
           );
           throw new Error();
@@ -113,7 +115,7 @@ function makeMarkupGallery(array) {
 
       return `
         <div class="photo-card">
-        <img src=${smallImg} alt=${alt} loading="lazy" />
+        <a href=${largeImg}><img src=${smallImg} alt=${alt} loading="lazy" /></a>
         <div class="info">
             <p class="info-item">
             <b>Likes ${likes}</b>
@@ -130,7 +132,17 @@ function makeMarkupGallery(array) {
         </div>
         </div>`;
     })
-    .join(',');
+    .join('');
 
   galleryEl.insertAdjacentHTML('beforeend', galleryMarkup);
+
+  const lightbox = new SimpleLightbox('.gallery a');
+
+  const { height: cardHeight } =
+    galleryEl.firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 2,
+    behavior: 'smooth',
+  });
 }
