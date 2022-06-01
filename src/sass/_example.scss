@@ -66,11 +66,8 @@ body {
 }
 
 .load-more {
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 50%;
-  height: 25px;
+  display: block;
+  margin: auto;
   background-color:  rgb(10, 10, 236);
   color: white;
   border-radius: 4px;
