@@ -1,5 +1,6 @@
 import Notiflix from 'notiflix';
 import SimpleLightbox from 'simplelightbox';
+
 const axios = require('axios');
 
 const formEl = document.querySelector('#search-form');
@@ -26,8 +27,6 @@ function pathMaker() {
   return `${URL}?key=${API_KEY}&q=${q}&image_type=${image_type}&orientation=${orientation}&safesearch=${safesearch}&page=${page}&per_page=${per_page}`;
 }
 
-// const PATH = `${URL}?key=${API_KEY}&q=${q}&image_type=${image_type}&orientation=${orientation}&safesearch=${safesearch}&page=${page}&per_page=${per_page}`;
-
 // -------------------------------
 
 formEl.addEventListener('submit', onSubmitForm);
@@ -35,12 +34,11 @@ moreBtn.addEventListener('click', onMoreBtnClick);
 
 function onSubmitForm(e) {
   e.preventDefault();
+  galleryEl.innerHTML = '';
   moreBtn.classList.add('hidden');
 
   page = 1;
   q = e.target.searchQuery.value;
-  galleryEl.innerHTML = '';
-
   const PATH = !q.trim() ? '' : pathMaker();
 
   request(PATH)
@@ -56,7 +54,7 @@ function onSubmitForm(e) {
         moreBtn.classList.remove('hidden');
       }
     })
-    .catch(error => console.log(error));
+    .catch(error => error);
 }
 
 function onMoreBtnClick() {
@@ -73,30 +71,36 @@ function onMoreBtnClick() {
   request(PATH)
     .then(data => {
       makeMarkupGallery(data.hits);
+
+      const { height: cardHeight } = document
+        .querySelector('.gallery')
+        .firstElementChild.getBoundingClientRect();
+
+      window.scrollBy({
+        top: cardHeight * 2,
+        behavior: 'smooth',
+      });
     })
     .catch(error => error);
 }
 
 // Request
 
-function request(url) {
+async function request(url) {
   if (!url) {
     Notiflix.Notify.failure('Search field can not be empthy!');
     return;
   } else {
-    return axios
-      .get(url)
-      .then(response => {
-        if (response.data.hits.length === 0) {
-          Notiflix.Notify.failure(
-            'Sorry, there are no images matching your search query. Please try again.'
-          );
-          throw new Error();
-        } else {
-          return response.data;
-        }
-      })
-      .catch(error => error);
+    const resp = await axios.get(url);
+    const data = resp.data;
+
+    if (data.hits.length === 0) {
+      Notiflix.Notify.failure(
+        'Sorry, there are no images matching your search query. Please try again.'
+      );
+    } else {
+      return data;
+    }
   }
 }
 
@@ -118,16 +122,20 @@ function makeMarkupGallery(array) {
         <a href=${largeImg}><img src=${smallImg} alt=${alt} loading="lazy" /></a>
         <div class="info">
             <p class="info-item">
-            <b>Likes ${likes}</b>
+            <b>Likes</b>
+            ${likes}
             </p>
             <p class="info-item">
-            <b>Views ${views}</b>
+            <b>Views</b>
+            ${views}
             </p>
             <p class="info-item">
-            <b>Comments ${comments}</b>
+            <b>Comments</b>
+            ${comments}
             </p>
             <p class="info-item">
-            <b>Downloads ${downloads}</b>
+            <b>Downloads</b>
+            ${downloads}
             </p>
         </div>
         </div>`;
@@ -136,13 +144,5 @@ function makeMarkupGallery(array) {
 
   galleryEl.insertAdjacentHTML('beforeend', galleryMarkup);
 
-  const lightbox = new SimpleLightbox('.gallery a');
-
-  const { height: cardHeight } =
-    galleryEl.firstElementChild.getBoundingClientRect();
-
-  window.scrollBy({
-    top: cardHeight * 2,
-    behavior: 'smooth',
-  });
+  new SimpleLightbox('.gallery a');
 }
